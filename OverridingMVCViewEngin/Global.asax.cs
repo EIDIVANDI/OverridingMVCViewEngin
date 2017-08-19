@@ -17,7 +17,7 @@ namespace OverridingMVCViewEngin
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
 
-            ViewEngines.Engines.Clear();
+            //ViewEngines.Engines.Clear();
             ViewEngines.Engines.Add(new CustomViewEngine());
         }
     }
