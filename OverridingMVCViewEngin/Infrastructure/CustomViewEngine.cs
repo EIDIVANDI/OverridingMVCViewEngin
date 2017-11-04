@@ -7,39 +7,67 @@ using System.Web.Mvc;
 
 namespace OverridingMVCViewEngin.Infrastructure
 {
-    
-    public class CustomViewEngine : IViewEngine
+
+    public class CustomViewEngine : RazorViewEngine
     {
-        ControllerContext _CoontrollerContext;
-        public ViewEngineResult FindPartialView(ControllerContext controllerContext, string partialViewName, bool useCache)
+        private string[] _ViewLocationFormats = null;
+
+        public CustomViewEngine()
+            : base()
         {
 
-            return new ViewEngineResult(GetViewLocations(controllerContext));
         }
-
-        public ViewEngineResult FindView(ControllerContext controllerContext, string viewName, string masterName, bool useCache)
+        private string[] GetViewLocations(ControllerContext cnt)
         {
-            
-            var cntl = controllerContext.RouteData.Values["controller"];
-            var act = controllerContext.RouteData.Values["action"];
-            return new ViewEngineResult(GetViewLocations(controllerContext));
-        }
+            if (_ViewLocationFormats == null ||
+                !_ViewLocationFormats.Any())
+            {
+                var cntl = cnt.RouteData.Values["controller"];
+                var act = cnt.RouteData.Values["action"];
 
-        private static string[] GetViewLocations(ControllerContext cnt)
-        {
-            var cntl = cnt.RouteData.Values["controller"];
-            var act = cnt.RouteData.Values["action"];
-            return new string[] { $"~/Views/{cntl}/{act}.cshtml",
+
+                _ViewLocationFormats = new string[] { $"~/Views/{cntl}/{act}.cshtml",
                 $"~/Views/Shared/{cntl}/{act}.cshtml",
                 $"~/Views/Shared/{act}.cshtml",
                 $"~/Views/{cntl}/{act}.vbhtml",
                 $"~/Views/Shared/{cntl}/{act}.vbhtml",
                 $"~/Views/Shared/{act}.vbhtml" };
+            }
+            return _ViewLocationFormats;
         }
 
-        public void ReleaseView(ControllerContext controllerContext, IView view)
+        private string[] GetDefaultPartialViewLocations()
         {
-            // do nothing as there is no specific state to be handled now
+            return GetDefaultViewLocations();
+        }
+
+        private string[] GetDefaultViewLocations()
+        {
+            return new[]
+            {
+                string.Format("~/{3}/{2}/{1}/{0}.cshtml","{0}","{1}","{2}","Views"),
+                string.Format("~/{3}/{2}/{1}/{0}.vbhtml","{0}","{1}","{2}","Views"),
+                string.Format("~/{1}/{2}/{0}.cshtml","{0}","Views", "Shared"),
+                string.Format("~/{1}/{2}/{0}.vbhtml","{0}","Views", "Shared"),
+            };
+        }
+
+        private string[] GetDefaultMasterLocations()
+        {
+            return new[]
+            {
+                string.Format("~/{3}/{2}/{1}/{0}.cshtml","{0}","{1}","{2}","Views"),
+                string.Format("~/{3}/{2}/{1}/{0}.vbhtml","{0}","{1}","{2}","Views"),
+                string.Format("~/{1}/{2}/{0}.cshtml","{0}","Views", "Shared"),
+                string.Format("~/{1}/{2}/{0}.vbhtml","{0}","Views", "Shared"),
+            };
+        }
+
+        protected override bool FileExists(ControllerContext controllerContext, string virtualPath)
+        {
+            ViewLocationFormats = GetViewLocations(controllerContext);
+            return base.FileExists(controllerContext, virtualPath);
         }
     }
+
 }
